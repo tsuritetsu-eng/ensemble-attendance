@@ -1,5 +1,5 @@
 const KEY='ensembleAttendanceV2';
-const API_URL=''; // Google Apps ScriptのウェブアプリURLをここに貼り付ける
+const API_URL='https://script.google.com/macros/s/AKfycbylVtujr6m_IH7VY0l2B_Hdi-EZfQ-hgD0Z0q69D39j2yCZI1K1JbFbrdzYkf6tKlx2/exec';
 const $=id=>document.getElementById(id);
 const uid=()=>crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2);
 const today=()=>new Date().toISOString().slice(0,10);
@@ -34,16 +34,13 @@ async function loadState(){
     renderAll();
   }
 }
-async function persist(){
-  saveLocal();
-  renderAll();
-}
+async function persist(){saveLocal();renderAll()}
 
 function renderMembers(){
   $('membersBody').innerHTML=state.members.length?state.members.map(m=>'<tr><td><strong>'+esc(m.name)+'</strong></td><td>'+esc(m.no)+'</td><td>'+esc(m.group)+'</td><td>'+esc(m.memo)+'</td><td><div class="actions"><button class="secondary" onclick="editMember(\''+m.id+'\')">編集</button><button class="danger" onclick="deleteMember(\''+m.id+'\')">削除</button></div></td></tr>').join(''):'<tr><td colspan="5" class="empty">部員が登録されていません。</td></tr>';
   $('attendanceMember').innerHTML=state.members.map(m=>'<option value="'+m.id+'">'+esc(m.name)+(m.group?' / '+esc(m.group):'')+'</option>').join('');
 }
-window.editMember=id=>{let m=member(id);if(!m)return;$('memberId').value=m.id;$('memberName').value=m.name;$('memberNo').value=m.no||'';$('memberGroup').value=m.group||'';$('memberMemo').value=m.memo||'';$('memberForm').classList.remove('hidden');$('memberName').focus()};
+window.editMember=id=>{let m=member(id);if(!m)return;$('memberId').value=m.id;$('memberName').value=m.name;$('memberNo').value=m.no||'';$('memberGroup').value=m.group||'';$('memberMemo').value=m.memo||'';$('memberForm').classList.remove('hidden');$('memberName').focus'};
 window.deleteMember=async id=>{let m=member(id);if(!m||!confirm(m.name+' を削除しますか？\nこの部員の勤怠記録も削除されます。'))return;try{if(API_URL)await api('deleteMember',{id});state.members=state.members.filter(x=>x.id!==id);state.records=state.records.filter(x=>x.memberId!==id);await persist()}catch(e){alert(e.message)}};
 function resetMemberForm(){$('memberForm').reset();$('memberId').value='';$('memberForm').classList.add('hidden')}
 $('newMemberBtn').onclick=()=>{$('memberForm').classList.remove('hidden');$('memberName').focus()};
