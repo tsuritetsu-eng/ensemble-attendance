@@ -25,7 +25,7 @@ table{width:100%;border-collapse:collapse;min-width:650px}th,td{padding:10px 9px
 .empty{text-align:center;color:#64748b;padding:24px}footer{text-align:center;color:#64748b;padding:30px 10px}
 @media(max-width:700px){
 body{padding-top:104px}.app-header{padding:10px 12px}.app-header h1{font-size:18px}
-.container{margin:10px auto;padding:0 8px}.tabs{top:56px;margin:0 -8px 12px;padding:7px 8px;gap:5px}.tab{padding:9px 11px;font-size:13px;min-height:40px}
+.container{margin:10px auto;padding:0 8px}.tabs{top:56px;margin:0;padding:7px 8px;gap:5px}.tab{padding:9px 11px;font-size:13px;min-height:40px}
 .grid.three{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.wide{grid-column:auto}
 .section-head{align-items:stretch;flex-direction:column}.section-head button{width:100%}.card{padding:13px;border-radius:12px}.stat strong{font-size:27px}
 table{min-width:600px}th,td{padding:9px 8px;font-size:13px}
