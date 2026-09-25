@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>アンサンブル部 勤怠管理</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1>🎼 アンサンブル部 勤怠管理</h1>
+    <p>部員の出退勤・勤務時間をまとめて管理</p>
+  </div>
+  <button id="backupBtn">バックアップ</button>
+  <label class="fileBtn">復元<input id="restoreInput" type="file" accept=".json"></label>
+</header>
+
+<nav>
+  <button data-tab="dashboard" class="active">ダッシュボード</button>
+  <button data-tab="members">部員管理</button>
+  <button data-tab="attendance">勤怠入力</button>
+  <button data-tab="weekly">週次集計</button>
+  <button data-tab="monthly">月次集計</button>
+</nav>
+
+<main>
+<section id="dashboard" class="tab active">
+  <div class="cards">
+    <div class="card"><span>登録部員</span><strong id="memberCount">0</strong></div>
+    <div class="card"><span>今週の総勤務時間</span><strong id="weekTotal">0時間00分</strong></div>
+    <div class="card"><span>今月の総勤務時間</span><strong id="monthTotal">0時間00分</strong></div>
+  </div>
+  <div class="panel">
+    <div class="toolbar"><h2>本日の勤怠</h2><span id="todayLabel"></span></div>
+    <div id="todayList"></div>
+  </div>
+</section>
+
+<section id="members" class="tab">
+  <div class="panel">
+    <div class="toolbar"><h2>部員管理</h2><button id="addMemberBtn">＋ 部員を追加</button></div>
+    <div id="memberForm" class="form hidden">
+      <input id="memberId" type="hidden">
+      <input id="memberName" placeholder="氏名">
+      <input id="memberNo" placeholder="部員番号">
+      <input id="memberGroup" placeholder="担当・パート（例：フルート）">
+      <input id="memberMemo" placeholder="メモ">
+      <button id="saveMemberBtn">保存</button><button id="cancelMemberBtn" class="secondary">キャンセル</button>
+    </div>
+    <div id="membersTable"></div>
+  </div>
+</section>
+
+<section id="attendance" class="tab">
+  <div class="panel">
+    <div class="toolbar"><h2>勤怠入力</h2><input id="attDate" type="date"></div>
+    <div id="attendanceTable"></div>
+  </div>
+</section>
+
+<section id="weekly" class="tab">
+  <div class="panel">
+    <div class="toolbar">
+      <h2>週次集計</h2>
+      <input id="weekDate" type="date">
+      <button id="csvWeekBtn">CSV出力</button>
+    </div>
+    <div id="weeklyTable"></div>
+  </div>
+</section>
+
+<section id="monthly" class="tab">
+  <div class="panel">
+    <div class="toolbar">
+      <h2>月次集計</h2>
+      <input id="monthDate" type="month">
+      <button id="csvMonthBtn">CSV出力</button>
+    </div>
+    <div id="monthlyTable"></div>
+  </div>
+</section>
+</main>
+
+<footer>データはこのブラウザ内に保存されます。重要なデータは定期的にバックアップしてください。</footer>
+<script src="app.js"></script>
+</body>
+</html>
