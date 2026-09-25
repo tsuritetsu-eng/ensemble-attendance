@@ -1,11 +1,11 @@
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;background:#f4f7fb;color:#1f2937}
-body{padding-top:62px}
+body{padding-top:112px}
 .app-header{position:fixed;top:0;left:0;right:0;z-index:1000;background:linear-gradient(135deg,#243b64,#496fa8);color:#fff;padding:12px 18px;box-shadow:0 3px 12px #0003}
 .app-header h1{margin:0;font-size:clamp(18px,4vw,26px);line-height:1.25}
 .app-header p{display:none}
 .container{max-width:1200px;margin:18px auto;padding:0 14px}
-.tabs{position:sticky;top:62px;z-index:900;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -14px 16px;padding:8px 14px;background:#f4f7fb;border-bottom:1px solid #dbe3ee;scrollbar-width:none}
+.tabs{position:fixed;top:56px;left:0;right:0;z-index:900;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0;padding:7px 10px;background:#fff;border-bottom:1px solid #dbe3ee;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
 .tab{flex:0 0 auto;border:0;background:#e4eaf3;color:#334155;border-radius:9px;padding:10px 14px;min-height:42px;white-space:nowrap;font-weight:700;font-size:14px;cursor:pointer;touch-action:manipulation}
 .tab.active,.primary{background:#315d9b;color:#fff}
@@ -24,7 +24,7 @@ body{padding-top:62px}
 table{width:100%;border-collapse:collapse;min-width:650px}th,td{padding:10px 9px;border-bottom:1px solid #e5e7eb;text-align:left;vertical-align:middle}th{background:#f8fafc;color:#475569;font-size:13px}
 .empty{text-align:center;color:#64748b;padding:24px}footer{text-align:center;color:#64748b;padding:30px 10px}
 @media(max-width:700px){
-body{padding-top:56px}.app-header{padding:10px 12px}.app-header h1{font-size:18px}
+body{padding-top:104px}.app-header{padding:10px 12px}.app-header h1{font-size:18px}
 .container{margin:10px auto;padding:0 8px}.tabs{top:56px;margin:0 -8px 12px;padding:7px 8px;gap:5px}.tab{padding:9px 11px;font-size:13px;min-height:40px}
 .grid.three{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.wide{grid-column:auto}
 .section-head{align-items:stretch;flex-direction:column}.section-head button{width:100%}.card{padding:13px;border-radius:12px}.stat strong{font-size:27px}
