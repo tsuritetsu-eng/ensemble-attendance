@@ -11,15 +11,42 @@ function hm(n){n=Math.max(0,Math.round(n));return Math.floor(n/60)+':'+String(n%
 function member(id){return state.members.find(x=>x.id===id)}
 function weekRange(d){let x=new Date(d+'T00:00:00'),day=x.getDay(),m=new Date(x);m.setDate(x.getDate()-(day===0?6:day-1));let s=new Date(m);s.setDate(m.getDate()+6);return[m.toISOString().slice(0,10),s.toISOString().slice(0,10)]}
 
-async function api(action,payload={}){
-  if(!API_URL) return null;
-  const body=JSON.stringify({action,...payload});
-  const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body});
-  if(!r.ok) throw new Error('サーバー通信エラー: '+r.status);
-  const data=await r.json();
-  if(!data.ok) throw new Error(data.error||'サーバー処理に失敗しました。');
-  return data;
+function api(action,payload={}){
+  if(!API_URL)return Promise.resolve(null);
+  return new Promise((resolve,reject)=>{
+    const callback='__ensembleApi_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+    const script=document.createElement('script');
+    const timer=setTimeout(()=>{
+      cleanup();
+      reject(new Error('Googleスプレッドシートへの接続がタイムアウトしました。Apps Scriptのデプロイ設定を確認してください。'));
+    },15000);
+    function cleanup(){
+      clearTimeout(timer);
+      delete window[callback];
+      script.remove();
+    }
+    window[callback]=data=>{
+      cleanup();
+      if(!data||!data.ok){
+        reject(new Error(data&&data.error?data.error:'Google Apps Scriptからエラーが返されました。'));
+        return;
+      }
+      resolve(data);
+    };
+    script.onerror=()=>{
+      cleanup();
+      reject(new Error('Google Apps Scriptに接続できませんでした。WebアプリのURLとデプロイ設定を確認してください。'));
+    };
+    const query=new URLSearchParams({
+      action,
+      payload:JSON.stringify({action,...payload}),
+      callback
+    });
+    script.src=API_URL+'?'+query.toString();
+    document.head.appendChild(script);
+  });
 }
+
 function saveLocal(){localStorage.setItem(KEY,JSON.stringify(state))}
 async function loadState(){
   if(!API_URL){renderAll();return}
