@@ -1,5 +1,5 @@
 const KEY='ensembleAttendanceV2';
-const API_URL='https://script.google.com/macros/s/AKfycbylVtujr6m_IH7VY0l2B_Hdi-EZfQ-hgD0Z0q69D39j2yCZI1K1JbFbrdzYkf6tKlx2/exec';
+const API_URL='https://script.google.com/macros/s/AKfycbyN8T86KQ0Zt_kqXtolEATTgnyVNZ7poW-b3yS3HAIbs6gyA7YcvfPwRb9V8-JClRs/exec';
 const $=id=>document.getElementById(id);
 const uid=()=>crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2);
 const today=()=>new Date().toISOString().slice(0,10);
