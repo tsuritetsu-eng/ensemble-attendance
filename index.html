@@ -1,88 +1,19 @@
 <!doctype html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>アンサンブル部 勤怠管理</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🎼 アンサンブル部 勤怠管理</title>
+<meta name="description" content="アンサンブル部の部員情報・勤怠・週次・月次を管理するブラウザアプリ">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header>
-  <div>
-    <h1>🎼 アンサンブル部 勤怠管理</h1>
-    <p>部員の出退勤・勤務時間をまとめて管理</p>
-  </div>
-  <button id="backupBtn">バックアップ</button>
-  <label class="fileBtn">復元<input id="restoreInput" type="file" accept=".json"></label>
-</header>
-
-<nav>
-  <button data-tab="dashboard" class="active">ダッシュボード</button>
-  <button data-tab="members">部員管理</button>
-  <button data-tab="attendance">勤怠入力</button>
-  <button data-tab="weekly">週次集計</button>
-  <button data-tab="monthly">月次集計</button>
-</nav>
-
-<main>
-<section id="dashboard" class="tab active">
-  <div class="cards">
-    <div class="card"><span>登録部員</span><strong id="memberCount">0</strong></div>
-    <div class="card"><span>今週の総勤務時間</span><strong id="weekTotal">0時間00分</strong></div>
-    <div class="card"><span>今月の総勤務時間</span><strong id="monthTotal">0時間00分</strong></div>
-  </div>
-  <div class="panel">
-    <div class="toolbar"><h2>本日の勤怠</h2><span id="todayLabel"></span></div>
-    <div id="todayList"></div>
-  </div>
-</section>
-
-<section id="members" class="tab">
-  <div class="panel">
-    <div class="toolbar"><h2>部員管理</h2><button id="addMemberBtn">＋ 部員を追加</button></div>
-    <div id="memberForm" class="form hidden">
-      <input id="memberId" type="hidden">
-      <input id="memberName" placeholder="氏名">
-      <input id="memberNo" placeholder="部員番号">
-      <input id="memberGroup" placeholder="担当・パート（例：フルート）">
-      <input id="memberMemo" placeholder="メモ">
-      <button id="saveMemberBtn">保存</button><button id="cancelMemberBtn" class="secondary">キャンセル</button>
-    </div>
-    <div id="membersTable"></div>
-  </div>
-</section>
-
-<section id="attendance" class="tab">
-  <div class="panel">
-    <div class="toolbar"><h2>勤怠入力</h2><input id="attDate" type="date"></div>
-    <div id="attendanceTable"></div>
-  </div>
-</section>
-
-<section id="weekly" class="tab">
-  <div class="panel">
-    <div class="toolbar">
-      <h2>週次集計</h2>
-      <input id="weekDate" type="date">
-      <button id="csvWeekBtn">CSV出力</button>
-    </div>
-    <div id="weeklyTable"></div>
-  </div>
-</section>
-
-<section id="monthly" class="tab">
-  <div class="panel">
-    <div class="toolbar">
-      <h2>月次集計</h2>
-      <input id="monthDate" type="month">
-      <button id="csvMonthBtn">CSV出力</button>
-    </div>
-    <div id="monthlyTable"></div>
-  </div>
-</section>
-</main>
-
-<footer>データはこのブラウザ内に保存されます。重要なデータは定期的にバックアップしてください。</footer>
-<script src="app.js"></script>
-</body>
-</html>
+<header class="app-header"><h1>🎼 アンサンブル部 勤怠管理</h1><p>部員情報と勤務時間をまとめて管理</p></header>
+<main class="container">
+<nav class="tabs"><button class="tab active" data-tab="dashboard">ダッシュボード</button><button class="tab" data-tab="members">部員管理</button><button class="tab" data-tab="attendance">勤怠入力</button><button class="tab" data-tab="weekly">週次集計</button><button class="tab" data-tab="monthly">月次集計</button></nav>
+<section id="dashboard" class="panel active"><div class="grid three"><div class="card stat"><span>部員数</span><strong id="statMembers">0</strong><small>登録中</small></div><div class="card stat"><span>今週の勤務時間</span><strong id="statWeek">0:00</strong><small>全員合計</small></div><div class="card stat"><span>今月の勤務時間</span><strong id="statMonth">0:00</strong><small>全員合計</small></div></div><div class="card"><h2>使い方</h2><ol><li>「部員管理」で部員を登録・編集します。</li><li>「勤怠入力」で日付・出退勤・休憩時間を入力します。</li><li>「週次集計」「月次集計」で部員ごとの勤務時間を確認できます。</li></ol></div></section>
+<section id="members" class="panel"><div class="card"><div class="section-head"><div><h2>部員管理</h2><p>部員情報はここから追加・編集・削除できます。</p></div><button id="newMemberBtn" class="primary">＋ 新規登録</button></div><form id="memberForm" class="form-grid hidden"><input type="hidden" id="memberId"><label>氏名<input id="memberName" required maxlength="60"></label><label>部員番号<input id="memberNo" maxlength="30"></label><label>担当・パート<input id="memberGroup" maxlength="60" placeholder="例：クラリネット"></label><label class="wide">メモ<textarea id="memberMemo" rows="3" maxlength="300"></textarea></label><div class="actions wide"><button type="submit" class="primary">保存</button><button type="button" id="cancelMember" class="secondary">キャンセル</button></div></form><div class="table-wrap"><table><thead><tr><th>氏名</th><th>部員番号</th><th>担当・パート</th><th>メモ</th><th>操作</th></tr></thead><tbody id="membersBody"></tbody></table></div></div></section>
+<section id="attendance" class="panel"><div class="card"><h2>勤怠入力</h2><form id="attendanceForm" class="form-grid"><label>部員<select id="attendanceMember" required></select></label><label>日付<input type="date" id="attendanceDate" required></label><label>出勤<input type="time" id="clockIn" required></label><label>退勤<input type="time" id="clockOut" required></label><label>休憩（分）<input type="number" id="breakMin" min="0" value="0"></label><label class="wide">メモ<input id="attendanceNote" maxlength="200"></label><div class="actions wide"><button class="primary" type="submit">勤怠を保存</button><button class="secondary" type="button" id="clearAttendance">入力をクリア</button></div></form></div><div class="card"><h2>登録済み勤怠</h2><div class="table-wrap"><table><thead><tr><th>日付</th><th>部員</th><th>出勤</th><th>退勤</th><th>休憩</th><th>勤務時間</th><th>操作</th></tr></thead><tbody id="attendanceBody"></tbody></table></div></div></section>
+<section id="weekly" class="panel"><div class="card"><div class="section-head"><div><h2>週次集計</h2><p id="weekLabel"></p></div><input type="date" id="weekDate"></div><div class="table-wrap"><table><thead><tr><th>部員</th><th>勤務日数</th><th>勤務時間</th><th>平均/日</th></tr></thead><tbody id="weeklyBody"></tbody></table></div></div></section>
+<section id="monthly" class="panel"><div class="card"><div class="section-head"><div><h2>月次集計</h2><p>指定月の部員ごとの勤務時間</p></div><input type="month" id="monthDate"></div><div class="table-wrap"><table><thead><tr><th>部員</th><th>勤務日数</th><th>勤務時間</th><th>平均/日</th></tr></thead><tbody id="monthlyBody"></tbody></table></div></div></section>
+</main><footer>アンサンブル部 勤怠管理</footer><script src="app.js"></script>
+</body></html>
