@@ -41,6 +41,12 @@ async function getHmacKey(secret) {
   );
 }
 
+function sessionSecret(env) {
+  // SESSION_SECRETを別途設定しなくても動くよう、
+  // パスワードハッシュをセッション署名鍵として利用します。
+  return String(env.MEMBER_PASSWORD_HASH || "").trim().toLowerCase();
+}
+
 function base64(bytes) {
   let s = "";
   for (const b of bytes) s += String.fromCharCode(b);
@@ -109,10 +115,10 @@ export default {
     }
 
     if (request.method === "POST" && url.pathname === "/login") {
-      if (!env.MEMBER_PASSWORD_HASH || !env.SESSION_SECRET) {
+      if (!env.MEMBER_PASSWORD_HASH) {
         return json({
           ok: false,
-          error: "Cloudflare Secretが未設定です。"
+          error: "MEMBER_PASSWORD_HASH が未設定です。"
         }, 503, origin);
       }
 
@@ -138,7 +144,7 @@ export default {
 
       return json({
         ok: true,
-        token: await createToken(env.SESSION_SECRET),
+        token: await createToken(sessionSecret(env)),
         expiresIn: TOKEN_TTL
       }, 200, origin);
     }
@@ -147,17 +153,17 @@ export default {
       return json({ ok: false, error: "Not Found" }, 404, origin);
     }
 
-    if (!env.SESSION_SECRET) {
+    if (!env.MEMBER_PASSWORD_HASH) {
       return json({
         ok: false,
-        error: "SESSION_SECRETが未設定です。"
+        error: "MEMBER_PASSWORD_HASH が未設定です。"
       }, 503, origin);
     }
 
     const auth = request.headers.get("Authorization") || "";
     const token = auth.replace(/^Bearer\s+/i, "");
 
-    if (!(await verifyToken(env.SESSION_SECRET, token))) {
+    if (!(await verifyToken(sessionSecret(env), token))) {
       return json({
         ok: false,
         error: "認証が必要です。"
