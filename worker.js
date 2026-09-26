@@ -122,6 +122,7 @@ export default {
         ok: true,
         memberPasswordHashConfigured: Boolean(env.MEMBER_PASSWORD_HASH),
         googleAppsScriptUrlConfigured: Boolean(env.GOOGLE_APPS_SCRIPT_URL),
+        workerSharedSecretConfigured: Boolean(env.WORKER_SHARED_SECRET),
         sessionSecretRequired: false,
         environment: "production"
       }, 200, origin);
@@ -187,6 +188,13 @@ export default {
       return json({
         ok: false,
         error: "GOOGLE_APPS_SCRIPT_URLが未設定です。"
+      }, 503, origin);
+    }
+
+    if (!env.WORKER_SHARED_SECRET) {
+      return json({
+        ok: false,
+        error: "WORKER_SHARED_SECRETが未設定です。"
       }, 503, origin);
     }
 
