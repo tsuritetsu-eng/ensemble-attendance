@@ -58,7 +58,15 @@ async function login(password){
   }
   const text=await r.text();
   let d;
-  try{d=JSON.parse(text);}catch(e){d={ok:false,error:'Workerから正しい応答が返ってきませんでした。'};}
+  try{
+    d=JSON.parse(text);
+  }catch(e){
+    const detail=text.replace(/<[^>]*>/g,' ').replace(/\\s+/g,' ').trim().slice(0,300);
+    throw new Error(
+      'WorkerがJSONを返していません（HTTP '+r.status+'）。'+
+      (detail?' 応答: '+detail:'')
+    );
+  }
   if(!r.ok||!d.ok)throw new Error(d.error||('ログインに失敗しました（HTTP '+r.status+'）。'));
   if(!d.token)throw new Error('ログインには成功しましたが、認証トークンが返ってきませんでした。');
   sessionStorage.setItem(TOKEN_KEY,d.token);
