@@ -1,5 +1,6 @@
 const ALLOWED_ORIGIN = "https://tsuritetsu-eng.github.io";
 const TOKEN_TTL = 43200;
+const WORKER_SHARED_SECRET_BINDING = "WORKER_SHARED_SECRET";
 
 function cors(origin) {
   return {
@@ -219,7 +220,16 @@ export default {
       target.searchParams.set("action", body.action);
       target.searchParams.set("payload", JSON.stringify(body));
 
-      const response = await fetch(target.toString());
+      const response = await fetch(target.toString(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          ...body,
+          _workerSecret: env[WORKER_SHARED_SECRET_BINDING]
+        })
+      });
       const text = await response.text();
 
       let data;
