@@ -7,7 +7,8 @@
 <link rel="stylesheet" href="style.css?v=20260925-mobile">
 </head>
 <body>
-<header class="app-header"><h1>🎼 アンサンブル部 勤怠管理</h1><p>部員情報と勤務時間をまとめて管理</p></header>
+<div id="loginScreen" class="login-screen"><div class="login-card"><h2>🔐 部員認証</h2><p>勤怠管理を利用するにはパスワードを入力してください。</p><form id="loginForm"><label>パスワード<input id="loginPassword" type="password" autocomplete="current-password" required maxlength="200"></label><button id="loginSubmit" class="primary" type="submit">ログイン</button><p id="loginError" class="login-error" role="alert"></p></form></div></div>
+<header class="app-header"><div><h1>🎼 アンサンブル部 勤怠管理</h1><p>部員情報と勤務時間をまとめて管理</p></div><button id="logoutBtn" class="secondary">ログアウト</button></header>
 <nav class="tabs" aria-label="メインメニュー"><button class="tab active" data-tab="dashboard">ダッシュボード</button><button class="tab" data-tab="members">部員管理</button><button class="tab" data-tab="attendance">勤怠入力</button><button class="tab" data-tab="weekly">週次集計</button><button class="tab" data-tab="monthly">月次集計</button></nav>
 <main class="container">
 <section id="dashboard" class="panel active"><div class="grid three"><div class="card stat"><span>部員数</span><strong id="statMembers">0</strong><small>登録中</small></div><div class="card stat"><span>今週の勤務時間</span><strong id="statWeek">0:00</strong><small>全員合計</small></div><div class="card stat"><span>今月の勤務時間</span><strong id="statMonth">0:00</strong><small>全員合計</small></div></div><div class="card"><h2>使い方</h2><ol><li>「部員管理」で部員を登録・編集します。</li><li>「勤怠入力」で日付・出退勤・休憩時間を入力します。</li><li>「週次集計」「月次集計」で部員ごとの勤務時間を確認できます。</li></ol></div></section>
