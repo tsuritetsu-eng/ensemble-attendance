@@ -114,6 +114,18 @@ export default {
       }, 200, origin);
     }
 
+    // Secretの「存在」だけを確認する診断用エンドポイント。
+    // Secretの値そのものは絶対に返しません。
+    if (request.method === "GET" && url.pathname === "/debug") {
+      return json({
+        ok: true,
+        memberPasswordHashConfigured: Boolean(env.MEMBER_PASSWORD_HASH),
+        googleAppsScriptUrlConfigured: Boolean(env.GOOGLE_APPS_SCRIPT_URL),
+        sessionSecretRequired: false,
+        environment: "production"
+      }, 200, origin);
+    }
+
     if (request.method === "POST" && url.pathname === "/login") {
       if (!env.MEMBER_PASSWORD_HASH) {
         return json({
