@@ -52,3 +52,13 @@ footer{padding-bottom:24px}
 .card{padding:11px}
 .container{padding-left:6px;padding-right:6px}
 }
+
+.login-screen{position:fixed;inset:0;z-index:5000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.45)}
+.login-screen.hidden{display:none}
+.login-card{width:min(420px,100%);background:#fff;border-radius:16px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.login-card h2{margin-top:0}
+.login-card form{display:grid;gap:14px}
+.login-card input{width:100%;box-sizing:border-box}
+.login-error{min-height:1.4em;color:#b00020;margin:0}
+.app-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+@media(max-width:700px){.app-header{align-items:flex-start}.app-header .secondary{flex:0 0 auto;padding:8px 10px}.login-card{padding:20px}}
