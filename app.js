@@ -1,5 +1,6 @@
 const KEY='ensembleAttendanceV2';
-const API_URL='https://script.google.com/macros/s/AKfycbyN8T86KQ0Zt_kqXtolEATTgnyVNZ7poW-b3yS3HAIbs6gyA7YcvfPwRb9V8-JClRs/exec';
+const WORKER_URL='https://ensemble-attendance.mrtsuritetsu.workers.dev';
+const TOKEN_KEY='ensembleAttendanceSession';
 const $=id=>document.getElementById(id);
 const uid=()=>crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2);
 const today=()=>new Date().toISOString().slice(0,10);
@@ -14,23 +15,44 @@ function weekRange(d){let x=new Date(d+'T00:00:00'),day=x.getDay(),m=new Date(x)
 function authToken(){return sessionStorage.getItem(TOKEN_KEY)||''}
 function showLogin(message=''){
   $('loginScreen')?.classList.remove('hidden');
-  const e=$('loginError'); if(e)e.textContent=message;
+  const e=$('loginError');if(e)e.textContent=message;
 }
-function hideLogin(){$('loginScreen')?.classList.add('hidden');if($('loginError'))$('loginError').textContent=''}
+function hideLogin(){
+  $('loginScreen')?.classList.add('hidden');
+  if($('loginError'))$('loginError').textContent='';
+}
 async function login(password){
-  const r=await fetch(WORKER_URL+'/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password})});
+  const r=await fetch(WORKER_URL+'/login',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({password})
+  });
   const d=await r.json().catch(()=>({ok:false,error:'ログイン応答を読み取れませんでした。'}));
   if(!r.ok||!d.ok)throw new Error(d.error||'ログインに失敗しました。');
   sessionStorage.setItem(TOKEN_KEY,d.token);
   hideLogin();
 }
-function logout(){sessionStorage.removeItem(TOKEN_KEY);location.reload()}
+function logout(){
+  sessionStorage.removeItem(TOKEN_KEY);
+  location.reload();
+}
 async function api(action,payload={}){
   const token=authToken();
   if(!token){showLogin();throw new Error('ログインが必要です。')}
-  const r=await fetch(WORKER_URL+'/api',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({action,...payload})});
+  const r=await fetch(WORKER_URL+'/api',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'Authorization':'Bearer '+token
+    },
+    body:JSON.stringify({action,...payload})
+  });
   const d=await r.json().catch(()=>({ok:false,error:'API応答を読み取れませんでした。'}));
-  if(r.status===401){sessionStorage.removeItem(TOKEN_KEY);showLogin('セッションが切れました。もう一度パスワードを入力してください。');throw new Error('認証が必要です。')}
+  if(r.status===401){
+    sessionStorage.removeItem(TOKEN_KEY);
+    showLogin('セッションが切れました。もう一度パスワードを入力してください。');
+    throw new Error('認証が必要です。');
+  }
   if(!r.ok||!d.ok)throw new Error(d.error||'サーバーからエラーが返されました。');
   return d;
 }
@@ -45,33 +67,183 @@ async function loadState(){
     renderAll();
   }catch(e){
     console.error(e);
-    alert('Googleスプレッドシートからデータを取得できませんでした。\n'+e.message+'\n\n現在の端末に保存されているデータを表示します。');
+    alert('Googleスプレッドシートからデータを取得できませんでした。\\n'+e.message+'\\n\\n現在の端末に保存されているデータを表示します。');
     renderAll();
   }
 }
 async function persist(){saveLocal();renderAll()}
 
 function renderMembers(){
-  $('membersBody').innerHTML=state.members.length?state.members.map(m=>'<tr><td><strong>'+esc(m.name)+'</strong></td><td>'+esc(m.no)+'</td><td>'+esc(m.group)+'</td><td>'+esc(m.memo)+'</td><td><div class="actions"><button class="secondary" onclick="editMember(\''+m.id+'\')">編集</button><button class="danger" onclick="deleteMember(\''+m.id+'\')">削除</button></div></td></tr>').join(''):'<tr><td colspan="5" class="empty">部員が登録されていません。</td></tr>';
+  $('membersBody').innerHTML=state.members.length
+    ?state.members.map(m=>'<tr><td><strong>'+esc(m.name)+'</strong></td><td>'+esc(m.no)+'</td><td>'+esc(m.group)+'</td><td>'+esc(m.memo)+'</td><td><div class="actions"><button class="secondary" onclick="editMember(\\''+m.id+'\\')">編集</button><button class="danger" onclick="deleteMember(\\''+m.id+'\\')">削除</button></div></td></tr>').join('')
+    :'<tr><td colspan="5" class="empty">部員が登録されていません。</td></tr>';
   $('attendanceMember').innerHTML=state.members.map(m=>'<option value="'+m.id+'">'+esc(m.name)+(m.group?' / '+esc(m.group):'')+'</option>').join('');
 }
-window.editMember=id=>{let m=member(id);if(!m)return;$('memberId').value=m.id;$('memberName').value=m.name;$('memberNo').value=m.no||'';$('memberGroup').value=m.group||'';$('memberMemo').value=m.memo||'';$('memberForm').classList.remove('hidden');$('memberName').focus();};
-window.deleteMember=async id=>{let m=member(id);if(!m||!confirm(m.name+' を削除しますか？\nこの部員の勤怠記録も削除されます。'))return;try{await api('deleteMember',{id});state.members=state.members.filter(x=>x.id!==id);state.records=state.records.filter(x=>x.memberId!==id);await persist()}catch(e){alert(e.message)}};
-function resetMemberForm(){$('memberForm').reset();$('memberId').value='';$('memberForm').classList.add('hidden')}
-$('newMemberBtn').onclick=()=>{$('memberForm').classList.remove('hidden');$('memberName').focus()};
+window.editMember=id=>{
+  let m=member(id);if(!m)return;
+  $('memberId').value=m.id;
+  $('memberName').value=m.name;
+  $('memberNo').value=m.no||'';
+  $('memberGroup').value=m.group||'';
+  $('memberMemo').value=m.memo||'';
+  $('memberForm').classList.remove('hidden');
+  $('memberName').focus();
+};
+window.deleteMember=async id=>{
+  let m=member(id);
+  if(!m||!confirm(m.name+' を削除しますか？\\nこの部員の勤怠記録も削除されます。'))return;
+  try{
+    await api('deleteMember',{id});
+    state.members=state.members.filter(x=>x.id!==id);
+    state.records=state.records.filter(x=>x.memberId!==id);
+    await persist();
+  }catch(e){alert(e.message)}
+};
+function resetMemberForm(){
+  $('memberForm').reset();
+  $('memberId').value='';
+  $('memberForm').classList.add('hidden');
+}
+$('newMemberBtn').onclick=()=>{
+  $('memberForm').classList.remove('hidden');
+  $('memberName').focus();
+};
 $('cancelMember').onclick=resetMemberForm;
-$('memberForm').onsubmit=async e=>{e.preventDefault();let id=$('memberId').value,o={id:id||uid(),name:$('memberName').value.trim(),no:$('memberNo').value.trim(),group:$('memberGroup').value.trim(),memo:$('memberMemo').value.trim()};if(!o.name)return;try{await api('saveMember',{member:o});let i=state.members.findIndex(x=>x.id===id);if(i>=0)state.members[i]=o;else state.members.push(o);resetMemberForm();await persist();alert('部員情報を保存しました。')}catch(e){alert(e.message)}};
+$('memberForm').onsubmit=async e=>{
+  e.preventDefault();
+  let id=$('memberId').value;
+  let o={
+    id:id||uid(),
+    name:$('memberName').value.trim(),
+    no:$('memberNo').value.trim(),
+    group:$('memberGroup').value.trim(),
+    memo:$('memberMemo').value.trim()
+  };
+  if(!o.name)return;
+  try{
+    await api('saveMember',{member:o});
+    let i=state.members.findIndex(x=>x.id===id);
+    if(i>=0)state.members[i]=o;else state.members.push(o);
+    resetMemberForm();
+    await persist();
+    alert('部員情報を保存しました。');
+  }catch(e){alert(e.message)}
+};
 
-$('attendanceForm').onsubmit=async e=>{e.preventDefault();let r={id:uid(),memberId:$('attendanceMember').value,date:$('attendanceDate').value,in:$('clockIn').value,out:$('clockOut').value,breakMin:Number($('breakMin').value||0),note:$('attendanceNote').value.trim()};if(!r.memberId||!r.date||!r.in||!r.out)return alert('部員・日付・出退勤を入力してください。');let old=state.records.find(x=>x.memberId===r.memberId&&x.date===r.date);if(old)r.id=old.id;try{await api('saveRecord',{record:r});let i=state.records.findIndex(x=>x.id===r.id);if(i>=0)state.records[i]=r;else state.records.push(r);await persist();alert('勤怠を保存しました。')}catch(e){alert(e.message)}};
-$('clearAttendance').onclick=()=>{$('attendanceForm').reset();$('loginForm').onsubmit=async e=>{e.preventDefault();const btn=$('loginSubmit');btn.disabled=true;try{await login($('loginPassword').value);$('loginPassword').value='';await loadState()}catch(err){showLogin(err.message)}finally{btn.disabled=false}};
+$('attendanceForm').onsubmit=async e=>{
+  e.preventDefault();
+  let r={
+    id:uid(),
+    memberId:$('attendanceMember').value,
+    date:$('attendanceDate').value,
+    in:$('clockIn').value,
+    out:$('clockOut').value,
+    breakMin:Number($('breakMin').value||0),
+    note:$('attendanceNote').value.trim()
+  };
+  if(!r.memberId||!r.date||!r.in||!r.out)return alert('部員・日付・出退勤を入力してください。');
+  let old=state.records.find(x=>x.memberId===r.memberId&&x.date===r.date);
+  if(old)r.id=old.id;
+  try{
+    await api('saveRecord',{record:r});
+    let i=state.records.findIndex(x=>x.id===r.id);
+    if(i>=0)state.records[i]=r;else state.records.push(r);
+    await persist();
+    alert('勤怠を保存しました。');
+  }catch(e){alert(e.message)}
+};
+
+$('clearAttendance').onclick=()=>{
+  $('attendanceForm').reset();
+  $('attendanceDate').value=today();
+  $('breakMin').value=0;
+};
+
 $('logoutBtn').onclick=logout;
-$('attendanceDate').value=today();$('breakMin').value=0};
-window.deleteRecord=async id=>{if(!confirm('この勤怠記録を削除しますか？'))return;try{await api('deleteRecord',{id});state.records=state.records.filter(r=>r.id!==id);await persist()}catch(e){alert(e.message)}};
 
-function renderAttendance(){let rs=[...state.records].sort((a,b)=>b.date.localeCompare(a.date));$('attendanceBody').innerHTML=rs.length?rs.map(r=>'<tr><td>'+r.date+'</td><td>'+esc(member(r.memberId)?.name||'削除済み')+'</td><td>'+r.in+'</td><td>'+r.out+'</td><td>'+r.breakMin+'分</td><td><strong>'+hm(mins(r))+'</strong></td><td><button class="danger" onclick="deleteRecord(\''+r.id+'\')">削除</button></td></tr>').join(''):'<tr><td colspan="7" class="empty">勤怠記録がありません。</td></tr>'}
-function renderWeekly(){let d=$('weekDate').value||today(),[s,e]=weekRange(d);$('weekLabel').textContent=s+' ～ '+e;$('weeklyBody').innerHTML=state.members.length?state.members.map(m=>{let rs=state.records.filter(r=>r.memberId===m.id&&r.date>=s&&r.date<=e),t=rs.reduce((a,r)=>a+mins(r),0);return'<tr><td>'+esc(m.name)+'</td><td>'+rs.length+'日</td><td><strong>'+hm(t)+'</strong></td><td>'+(rs.length?hm(t/rs.length):'0:00')+'</td></tr>'}).join(''):'<tr><td colspan="4" class="empty">部員が登録されていません。</td></tr>'}
-function renderMonthly(){let v=$('monthDate').value||today().slice(0,7);$('monthlyBody').innerHTML=state.members.length?state.members.map(m=>{let rs=state.records.filter(r=>r.memberId===m.id&&r.date.startsWith(v)),t=rs.reduce((a,r)=>a+mins(r),0);return'<tr><td>'+esc(m.name)+'</td><td>'+rs.length+'日</td><td><strong>'+hm(t)+'</strong></td><td>'+(rs.length?hm(t/rs.length):'0:00')+'</td></tr>'}).join(''):'<tr><td colspan="4" class="empty">部員が登録されていません。</td></tr>'}
-function renderDash(){let[s,e]=weekRange(today()),w=state.records.filter(r=>r.date>=s&&r.date<=e).reduce((a,r)=>a+mins(r),0),mo=state.records.filter(r=>r.date.startsWith(today().slice(0,7))).reduce((a,r)=>a+mins(r),0);$('statMembers').textContent=state.members.length;$('statWeek').textContent=hm(w);$('statMonth').textContent=hm(mo)}
-function renderAll(){renderMembers();renderAttendance();renderWeekly();renderMonthly();renderDash()}
-document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.tab).classList.add('active');renderAll()});
-$('attendanceDate').value=today();$('weekDate').value=today();$('monthDate').value=today().slice(0,7);$('weekDate').onchange=renderWeekly;$('monthDate').onchange=renderMonthly;if(authToken())loadState();else showLogin();
+window.deleteRecord=async id=>{
+  if(!confirm('この勤怠記録を削除しますか？'))return;
+  try{
+    await api('deleteRecord',{id});
+    state.records=state.records.filter(r=>r.id!==id);
+    await persist();
+  }catch(e){alert(e.message)}
+};
+
+function renderAttendance(){
+  let rs=[...state.records].sort((a,b)=>b.date.localeCompare(a.date));
+  $('attendanceBody').innerHTML=rs.length
+    ?rs.map(r=>'<tr><td>'+r.date+'</td><td>'+esc(member(r.memberId)?.name||'削除済み')+'</td><td>'+r.in+'</td><td>'+r.out+'</td><td>'+r.breakMin+'分</td><td><strong>'+hm(mins(r))+'</strong></td><td><button class="danger" onclick="deleteRecord(\\''+r.id+'\\')">削除</button></td></tr>').join('')
+    :'<tr><td colspan="7" class="empty">勤怠記録がありません。</td></tr>';
+}
+function renderWeekly(){
+  let d=$('weekDate').value||today(),[s,e]=weekRange(d);
+  $('weekLabel').textContent=s+' ～ '+e;
+  $('weeklyBody').innerHTML=state.members.length
+    ?state.members.map(m=>{
+      let rs=state.records.filter(r=>r.memberId===m.id&&r.date>=s&&r.date<=e),t=rs.reduce((a,r)=>a+mins(r),0);
+      return'<tr><td>'+esc(m.name)+'</td><td>'+rs.length+'日</td><td><strong>'+hm(t)+'</strong></td><td>'+(rs.length?hm(t/rs.length):'0:00')+'</td></tr>';
+    }).join('')
+    :'<tr><td colspan="4" class="empty">部員が登録されていません。</td></tr>';
+}
+function renderMonthly(){
+  let v=$('monthDate').value||today().slice(0,7);
+  $('monthlyBody').innerHTML=state.members.length
+    ?state.members.map(m=>{
+      let rs=state.records.filter(r=>r.memberId===m.id&&r.date.startsWith(v)),t=rs.reduce((a,r)=>a+mins(r),0);
+      return'<tr><td>'+esc(m.name)+'</td><td>'+rs.length+'日</td><td><strong>'+hm(t)+'</strong></td><td>'+(rs.length?hm(t/rs.length):'0:00')+'</td></tr>';
+    }).join('')
+    :'<tr><td colspan="4" class="empty">部員が登録されていません。</td></tr>';
+}
+function renderDash(){
+  let[s,e]=weekRange(today());
+  let w=state.records.filter(r=>r.date>=s&&r.date<=e).reduce((a,r)=>a+mins(r),0);
+  let mo=state.records.filter(r=>r.date.startsWith(today().slice(0,7))).reduce((a,r)=>a+mins(r),0);
+  $('statMembers').textContent=state.members.length;
+  $('statWeek').textContent=hm(w);
+  $('statMonth').textContent=hm(mo);
+}
+function renderAll(){
+  renderMembers();
+  renderAttendance();
+  renderWeekly();
+  renderMonthly();
+  renderDash();
+}
+
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  $(b.dataset.tab).classList.add('active');
+  renderAll();
+});
+
+$('loginForm').onsubmit=async e=>{
+  e.preventDefault();
+  const btn=$('loginSubmit');
+  const password=$('loginPassword').value;
+  if(!password)return;
+  btn.disabled=true;
+  btn.textContent='ログイン中…';
+  showLogin('');
+  try{
+    await login(password);
+    $('loginPassword').value='';
+    await loadState();
+  }catch(err){
+    console.error(err);
+    showLogin(err.message||'ログインに失敗しました。');
+  }finally{
+    btn.disabled=false;
+    btn.textContent='ログイン';
+  }
+};
+
+$('attendanceDate').value=today();
+$('weekDate').value=today();
+$('monthDate').value=today().slice(0,7);
+$('weekDate').onchange=renderWeekly;
+$('monthDate').onchange=renderMonthly;
+
+if(authToken())loadState();else showLogin();
