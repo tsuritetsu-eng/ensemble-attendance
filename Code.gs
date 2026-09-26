@@ -2,6 +2,18 @@ const SPREADSHEET_ID='';
 const SHEET_MEMBERS='部員';
 const SHEET_RECORDS='勤怠';
 
+// Cloudflare Worker専用の秘密鍵。
+// 実際の値はGoogle Apps Scriptの「スクリプト プロパティ」に
+// WORKER_SHARED_SECRET という名前で保存します。
+// Code.gsには秘密鍵そのものを書きません。
+function workerSharedSecret_(){
+  return String(
+    PropertiesService
+      .getScriptProperties()
+      .getProperty('WORKER_SHARED_SECRET') || ''
+  ).trim();
+}
+
 function spreadsheet_(){
   return SPREADSHEET_ID
     ? SpreadsheetApp.openById(SPREADSHEET_ID)
@@ -35,6 +47,25 @@ function jsonp_(callback,obj){
   return ContentService
     .createTextOutput(safe+'('+JSON.stringify(obj)+');')
     .setMimeType(ContentService.MimeType.JAVASCRIPT);
+}
+
+// Cloudflare Workerから送られた秘密鍵を検証。
+// 部員・ブラウザ側からこの値を入力することはありません。
+function authorizeWorker_(p){
+  const expected=workerSharedSecret_();
+  const received=String(p&&p._workerSecret?p._workerSecret:'').trim();
+
+  if(!expected){
+    throw new Error(
+      'Google Apps Scriptのスクリプトプロパティ「WORKER_SHARED_SECRET」が未設定です。'
+    );
+  }
+
+  if(received!==expected){
+    throw new Error('Worker認証に失敗しました。');
+  }
+
+  return true;
 }
 
 function rows_(name){
@@ -86,44 +117,59 @@ function delete_(sheetName,id){
 }
 
 function handle_(p){
+  // すべてのデータ操作はCloudflare Worker経由のみ許可
+  authorizeWorker_(p);
+
   setup();
+
   if(p.action==='getAll'){
     return {ok:true,members:rows_(SHEET_MEMBERS),records:recordRows_()};
   }
+
   if(p.action==='saveMember'){
     upsert_(SHEET_MEMBERS,p.member,['id','no','name','group','memo']);
     return {ok:true};
   }
+
   if(p.action==='deleteMember'){
     const records=recordRows_().filter(r=>r.memberId===p.id);
     records.forEach(r=>delete_(SHEET_RECORDS,r.id));
     delete_(SHEET_MEMBERS,p.id);
     return {ok:true};
   }
+
   if(p.action==='saveRecord'){
     upsert_(SHEET_RECORDS,p.record,['id','memberId','date','in','out','breakMin','note']);
     return {ok:true};
   }
+
   if(p.action==='deleteRecord'){
     delete_(SHEET_RECORDS,p.id);
     return {ok:true};
   }
+
   throw new Error('未対応のactionです。');
 }
 
 function doGet(e){
   try{
     const p=e&&e.parameter?e.parameter:{};
+
+    // action付きGETは認証必須。
     if(p.action){
       const payload=p.payload?JSON.parse(p.payload):p;
       const result=handle_(payload);
       return jsonp_(p.callback,result);
     }
+
+    // actionなしのGETは稼働確認だけ。
+    // スプレッドシートのデータは返しません。
     return json_({
       ok:true,
       message:'アンサンブル部勤怠APIは稼働しています。',
       time:new Date().toISOString()
     });
+
   }catch(err){
     return jsonp_((e&&e.parameter&&e.parameter.callback)||'',{
       ok:false,
