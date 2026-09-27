@@ -1,6 +1,5 @@
 const KEY='ensembleAttendanceV2';
 const WORKER_URL='https://ensemble-attendance.mrtsuritetsu.workers.dev';
-const TOKEN_KEY='ensembleAttendanceSession';
 
 const $=id=>document.getElementById(id);
 const uid=()=>crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2);
@@ -28,67 +27,12 @@ function weekRange(d){
   return [m.toISOString().slice(0,10),s.toISOString().slice(0,10)];
 }
 
-function authToken(){return sessionStorage.getItem(TOKEN_KEY)||'';}
-
-function showLogin(message=''){
-  const screen=$('loginScreen');
-  if(screen)screen.classList.remove('hidden');
-  const error=$('loginError');
-  if(error)error.textContent=message;
-}
-
-function hideLogin(){
-  const screen=$('loginScreen');
-  if(screen)screen.classList.add('hidden');
-  const error=$('loginError');
-  if(error)error.textContent='';
-}
-
-async function login(password){
-  if(!password)throw new Error('パスワードを入力してください。');
-  let r;
-  try{
-    r=await fetch(WORKER_URL+'/login',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({password})
-    });
-  }catch(e){
-    throw new Error('Cloudflare Workerに接続できません。ページを再読み込みしてもう一度お試しください。');
-  }
-  const text=await r.text();
-  let d;
-  try{
-    d=JSON.parse(text);
-  }catch(e){
-    const detail=text.replace(/<[^>]*>/g,' ').replace(/\\s+/g,' ').trim().slice(0,300);
-    throw new Error(
-      'WorkerがJSONを返していません（HTTP '+r.status+'）。'+
-      (detail?' 応答: '+detail:'')
-    );
-  }
-  if(!r.ok||!d.ok)throw new Error(d.error||('ログインに失敗しました（HTTP '+r.status+'）。'));
-  if(!d.token)throw new Error('ログインには成功しましたが、認証トークンが返ってきませんでした。');
-  sessionStorage.setItem(TOKEN_KEY,d.token);
-  hideLogin();
-}
-
-function logout(){
-  sessionStorage.removeItem(TOKEN_KEY);
-  location.reload();
-}
-
 async function api(action,payload={}){
-  const token=authToken();
-  if(!token){showLogin();throw new Error('ログインが必要です。');}
   let r;
   try{
     r=await fetch(WORKER_URL+'/api',{
       method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'Authorization':'Bearer '+token
-      },
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({action,...payload})
     });
   }catch(e){
@@ -97,11 +41,6 @@ async function api(action,payload={}){
   const text=await r.text();
   let d;
   try{d=JSON.parse(text);}catch(e){d={ok:false,error:'API応答を読み取れませんでした。'};}
-  if(r.status===401){
-    sessionStorage.removeItem(TOKEN_KEY);
-    showLogin('セッションが切れました。もう一度パスワードを入力してください。');
-    throw new Error('認証が必要です。');
-  }
   if(!r.ok||!d.ok)throw new Error(d.error||('サーバーエラー（HTTP '+r.status+'）。'));
   return d;
 }
@@ -109,7 +48,6 @@ async function api(action,payload={}){
 function saveLocal(){localStorage.setItem(KEY,JSON.stringify(state));}
 
 async function loadState(){
-  if(!authToken()){showLogin();return;}
   try{
     const data=await api('getAll');
     state={members:data.members||[],records:data.records||[]};
@@ -278,29 +216,6 @@ $('clearAttendance').addEventListener('click',()=>{
   $('attendanceDate').value=today();
   $('breakMin').value=0;
 });
-$('logoutBtn').addEventListener('click',logout);
-
-$('loginForm').addEventListener('submit',async e=>{
-  e.preventDefault();
-  const btn=$('loginSubmit');
-  const error=$('loginError');
-  const password=$('loginPassword').value;
-  if(!password){showLogin('パスワードを入力してください。');return;}
-  btn.disabled=true;
-  btn.textContent='接続中…';
-  if(error)error.textContent='';
-  try{
-    await login(password);
-    $('loginPassword').value='';
-    await loadState();
-  }catch(err){
-    console.error(err);
-    showLogin(err.message||'ログインに失敗しました。');
-  }finally{
-    btn.disabled=false;
-    btn.textContent='ログイン';
-  }
-});
 
 $('attendanceDate').value=today();
 $('weekDate').value=today();
@@ -308,4 +223,4 @@ $('monthDate').value=today().slice(0,7);
 $('weekDate').addEventListener('change',renderWeekly);
 $('monthDate').addEventListener('change',renderMonthly);
 
-if(authToken())loadState();else showLogin();
+loadState();
